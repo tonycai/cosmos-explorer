@@ -336,8 +336,11 @@ export const useDashboard = defineStore('dashboard', {
       }
     },
     async loadingFromLocal() {
-      if(window.location.hostname.search("testnet") > -1) {
-        this.networkType = NetworkType.Testnet
+      // Default to testnet to enable faucet access
+      this.networkType = NetworkType.Testnet;
+      // Override only if explicitly on a mainnet hostname
+      if(window.location.hostname.search("mainnet") > -1) {
+        this.networkType = NetworkType.Mainnet
       }
       const source: Record<string, LocalConfig> =
         this.networkType === NetworkType.Mainnet

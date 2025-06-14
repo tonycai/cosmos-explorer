@@ -43,8 +43,12 @@ const validAddress = computed(() => {
 });
 
 const faucetUrl = computed(() => {
+    // Use the configured faucet URL from chain configuration if available
+    if (typeof chainStore.current?.faucet === 'string') {
+        return chainStore.current.faucet;
+    }
+    // Fallback to ping.pub central service for chains without direct faucet URL
     return `https://faucet.ping.pub/${chainStore.current?.chainName}`;
-    // return `http://localhost:3000/${chainStore.current?.chainName}`;
 });
 
 
@@ -62,6 +66,16 @@ function claim() {
 }
 
 function balance() {
+    // For direct faucet URLs (like AIW3), try to get balance info
+    if (typeof chainStore.current?.faucet === 'string') {
+        // Try to get faucet info - for AIW3 we'll set some default values
+        // since the faucet endpoint doesn't provide balance info in the same format
+        faucet.value = 'aiw316s6un670ll3uuzsxlzr0zkkw7ss3xwhql6rlxa'; // Known faucet address for AIW3
+        balances.value = [{ denom: 'uaiw3', amount: '50000000000' }]; // 50k AIW3 as provided by user
+        return;
+    }
+    
+    // For ping.pub central service, use the original balance endpoint
     get(`${faucetUrl.value}/balance`).then(res => {
         if(res.status === 'error') {
             configChecker.value = res.message;
@@ -69,6 +83,10 @@ function balance() {
         }
         balances.value = res.result?.balance;
         faucet.value = res.result?.address;
+    }).catch(err => {
+        console.log('Balance fetch error:', err);
+        // For local development, set default values
+        configChecker.value = 'Could not fetch balance info from faucet service';
     });
 }
 

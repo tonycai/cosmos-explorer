@@ -1,0 +1,21 @@
+{
+    "chain_name": "aiw3-devnet",
+    "api": ["http://localhost:3000/api"],
+    "rpc": ["https://devnet-rpc.aiw3.io"],
+    "faucet": "https://devnet-faucet.aiw3.io",
+    "coingecko": "",
+    "snapshot_provider": "",
+    "sdk_version": "0.47.1",
+    "coin_type": "118",
+    "min_tx_fee": "1000",
+    "addr_prefix": "aiw3",
+    "logo": "https://mypinata.moonpump.ai/ipfs/bafybeie7kjiokeo7pm5j33tszrouvntmw3i3tiu4q7ddv4qewddwsrfud4",
+    "theme_color": "#4338ca",
+    "assets": [{
+        "base": "uaiw3",
+        "symbol": "AIW3",
+        "exponent": "6",
+        "coingecko_id": "", 
+        "logo": ""
+    }]
+} 
