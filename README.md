@@ -21,7 +21,7 @@
 
 **🔗 Live App:** [https://ping.pub](https://ping.pub)
 
-**🧪 Current Configuration**: This instance is configured for **AIW3 Devnet** with integrated faucet functionality.
+**🧪 Current Configuration**: This instance is configured for **AIW3 Devnet** with integrated faucet functionality and CORS-enabled API proxy.
 
 ---
 
@@ -53,6 +53,7 @@
 
 ### 🚰 **Integrated Faucet**
 - **Testnet Token Distribution**: Built-in faucet functionality
+- **Direct Faucet Integration**: Supports both ping.pub and custom faucet services
 - **Balance Monitoring**: Faucet account balance tracking
 - **Transaction Confirmation**: Direct transaction links
 - **Rate Limiting**: Built-in protection against abuse
@@ -62,6 +63,7 @@
 - **CosmWasm Integration**: Smart contract interaction
 - **State Sync**: Fast node synchronization tools
 - **Custom Widgets**: Embeddable blockchain widgets
+- **CORS Proxy**: Built-in proxy for API endpoints without CORS support
 
 ---
 
@@ -74,6 +76,7 @@
 - **Blockchain Integration**: CosmJS + Osmosis.js
 - **Build Tool**: Vite with modern ES modules
 - **Deployment**: Docker + Nginx
+- **Proxy**: Vite dev server proxy for CORS handling
 
 ### **Project Structure**
 ```
@@ -82,22 +85,25 @@ src/
 ├── layouts/        # Application layouts
 ├── modules/        # Feature modules
 │   ├── [chain]/   # Chain-specific features
+│   │   └── faucet/ # Faucet functionality
 │   └── wallet/    # Wallet functionality
 ├── pages/         # Route pages
 ├── plugins/       # Vue plugins (i18n, etc.)
 ├── router/        # Vue Router configuration
 ├── stores/        # Pinia state stores
+│   └── useDashboard.ts # Main dashboard store
 └── types/         # TypeScript definitions
 
 chains/
-└── testnet/       # Testnet configurations
+└── testnet/       # Testnet configurations (default)
     └── aiw3-devnet.json  # AIW3 devnet config
 
 docker/
 ├── Dockerfile         # Production build
 ├── Dockerfile.dev     # Development build
 ├── docker-compose.yml # Container orchestration
-└── nginx.conf        # Web server configuration
+├── nginx.conf        # Web server configuration
+└── docker.sh         # Management script
 ```
 
 ---
@@ -220,9 +226,10 @@ This Ping Dashboard instance is configured for the **AIW3 Devnet** with the foll
 - **Token**: AIW3 (6 decimal places)
 - **Address Prefix**: `aiw3`
 - **Coin Type**: 118
+- **Network Type**: Testnet (default)
 
 **Service Endpoints**:
-- **API Service**: `https://devnet-api.aiw3.io`
+- **API Service**: `https://devnet-api.aiw3.io` (proxied via `http://localhost:3000/api`)
 - **RPC Service**: `https://devnet-rpc.aiw3.io`
 - **Faucet Service**: `https://devnet-faucet.aiw3.io`
 
@@ -230,18 +237,49 @@ This Ping Dashboard instance is configured for the **AIW3 Devnet** with the foll
 ```json
 {
     "chain_name": "aiw3-devnet",
-    "api": ["https://devnet-api.aiw3.io"],
+    "api": ["http://localhost:3000/api"],
     "rpc": ["https://devnet-rpc.aiw3.io"],
     "faucet": "https://devnet-faucet.aiw3.io",
     "sdk_version": "0.47.1",
     "coin_type": "118",
     "min_tx_fee": "1000",
     "addr_prefix": "aiw3",
+    "logo": "https://mypinata.moonpump.ai/ipfs/bafybeie7kjiokeo7pm5j33tszrouvntmw3i3tiu4q7ddv4qewddwsrfud4",
+    "theme_color": "#4338ca",
     "assets": [{
         "base": "uaiw3",
         "symbol": "AIW3",
-        "exponent": "6"
+        "exponent": "6",
+        "coingecko_id": "",
+        "logo": ""
     }]
+}
+```
+
+### **CORS Proxy Configuration**
+The Vite development server includes a proxy configuration to handle CORS issues:
+
+```typescript
+// vite.config.ts
+server: {
+  proxy: {
+    '/api': {
+      target: 'https://devnet-api.aiw3.io',
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, ''),
+      configure: (proxy, _options) => {
+        proxy.on('error', (err, _req, _res) => {
+          console.log('proxy error', err);
+        });
+        proxy.on('proxyReq', (proxyReq, req, _res) => {
+          console.log('Sending Request to the Target:', req.method, req.url);
+        });
+        proxy.on('proxyRes', (proxyRes, req, _res) => {
+          console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+        });
+      },
+    },
+  },
 }
 ```
 
@@ -255,7 +293,7 @@ The integrated faucet allows users to request testnet tokens for development and
 **Faucet URL**: Visit `/aiw3-devnet/faucet` in the application
 
 ### **How to Use**
-1. **Connect Your Wallet**: Use Keplr or compatible wallet
+1. **Navigate to Faucet**: Go to `http://localhost:3000/aiw3-devnet/faucet`
 2. **Enter Address**: Paste your AIW3 address (starts with `aiw3`)
 3. **Request Tokens**: Click "Get Tokens" to receive testnet funds
 4. **Transaction Confirmation**: View the transaction hash for confirmation
@@ -265,12 +303,221 @@ The integrated faucet allows users to request testnet tokens for development and
 - ✅ **Transaction Tracking**: Direct links to successful transactions
 - ✅ **Address Validation**: Ensures proper address format
 - ✅ **Status Monitoring**: Health checks for faucet availability
+- ✅ **Direct Integration**: Works with custom faucet services
+- ✅ **Automatic Configuration**: Detects faucet type and adjusts accordingly
 
-### **Faucet Requirements**
-- Valid AIW3 address (prefix: `aiw3`)
-- Sufficient faucet balance
-- Active API endpoints
-- Proper CORS configuration
+### **Faucet Configuration**
+The faucet component automatically detects the faucet type:
+
+**For Custom Faucets (like AIW3)**:
+- Uses the `faucet` URL directly from chain configuration
+- Handles custom API responses
+- Shows configured faucet address and balance
+
+**For Ping.pub Central Service**:
+- Falls back to `https://faucet.ping.pub/{chain_name}`
+- Uses standard ping.pub faucet API format
+
+### **Current Faucet Status**
+- **Faucet Address**: `aiw316s6un670ll3uuzsxlzr0zkkw7ss3xwhql6rlxa`
+- **Balance**: ~50,000 AIW3 tokens
+- **Amount per Request**: 1 AIW3 token
+- **Status**: ✅ Fully Operational
+
+---
+
+## 🔧 Custom Upgrade Guide
+
+### **For Future Chain Upgrades**
+
+This section provides a comprehensive guide for upgrading to new chains or updating existing configurations.
+
+#### **1. Adding a New Chain**
+
+**Step 1: Create Chain Configuration**
+```bash
+# Create new chain config file
+touch chains/testnet/your-new-chain.json
+```
+
+**Step 2: Configure Chain Details**
+```json
+{
+    "chain_name": "your-new-chain",
+    "api": ["https://api.your-chain.com"],
+    "rpc": ["https://rpc.your-chain.com"],
+    "faucet": "https://faucet.your-chain.com",
+    "sdk_version": "0.47.1",
+    "coin_type": "118",
+    "min_tx_fee": "1000",
+    "addr_prefix": "yourchain",
+    "logo": "https://your-logo-url.com/logo.png",
+    "theme_color": "#your-color",
+    "assets": [{
+        "base": "uyourtoken",
+        "symbol": "YOURTOKEN",
+        "exponent": "6",
+        "coingecko_id": "your-token-id",
+        "logo": "https://your-token-logo.com/logo.png"
+    }]
+}
+```
+
+**Step 3: Handle CORS Issues**
+If your API doesn't support CORS, update `vite.config.ts`:
+
+```typescript
+server: {
+  proxy: {
+    '/api': {
+      target: 'https://api.your-chain.com',
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, ''),
+    },
+  },
+}
+```
+
+Then update your chain config to use the proxy:
+```json
+{
+    "api": ["http://localhost:3000/api"]
+}
+```
+
+#### **2. Updating Existing Chain**
+
+**Step 1: Update Configuration**
+```bash
+# Edit existing configuration
+nano chains/testnet/aiw3-devnet.json
+```
+
+**Step 2: Update Endpoints**
+- Update API, RPC, and faucet URLs
+- Modify SDK version if needed
+- Update token information
+
+**Step 3: Test Configuration**
+```bash
+# Restart development server
+./docker.sh stop
+./docker.sh dev
+
+# Test endpoints
+curl -s http://localhost:3000/api/cosmos/base/tendermint/v1beta1/node_info
+```
+
+#### **3. Network Type Configuration**
+
+**Default to Testnet** (current setup):
+```typescript
+// src/stores/useDashboard.ts
+async loadingFromLocal() {
+  // Default to testnet to enable faucet access
+  this.networkType = NetworkType.Testnet;
+  // Override only if explicitly on a mainnet hostname
+  if(window.location.hostname.search("mainnet") > -1) {
+    this.networkType = NetworkType.Mainnet
+  }
+  // ... rest of the code
+}
+```
+
+**Default to Mainnet**:
+```typescript
+async loadingFromLocal() {
+  // Default to mainnet
+  this.networkType = NetworkType.Mainnet;
+  // Override if hostname contains "testnet"
+  if(window.location.hostname.search("testnet") > -1) {
+    this.networkType = NetworkType.Testnet
+  }
+  // ... rest of the code
+}
+```
+
+#### **4. Faucet Integration**
+
+**For Custom Faucet Services**:
+1. Set the `faucet` field in chain configuration to your faucet URL
+2. The faucet component will automatically use the custom service
+3. Update faucet address and balance in the component if needed
+
+**For Ping.pub Central Service**:
+1. Remove or set `faucet` field to empty string
+2. The component will fallback to `https://faucet.ping.pub/{chain_name}`
+
+#### **5. Docker Deployment Updates**
+
+**Update Production Build**:
+```bash
+# Stop current containers
+./docker.sh stop
+
+# Rebuild with new configuration
+./docker.sh build --no-cache
+
+# Start updated service
+./docker.sh start
+```
+
+**Update Development Environment**:
+```bash
+# Restart development server
+./docker.sh stop
+./docker.sh dev
+```
+
+#### **6. Testing Checklist**
+
+Before deploying upgrades, test the following:
+
+**Basic Functionality**:
+- [ ] Chain loads correctly
+- [ ] API endpoints respond
+- [ ] Block explorer shows latest blocks
+- [ ] Transaction search works
+
+**Wallet Integration**:
+- [ ] Connect wallet (Keplr/Unisat)
+- [ ] Address displays correctly
+- [ ] Balance shows properly
+- [ ] Send transactions work
+
+**Advanced Features**:
+- [ ] Staking operations (delegate/undelegate)
+- [ ] Governance proposals display
+- [ ] IBC transfers (if applicable)
+- [ ] Faucet functionality
+
+**Performance**:
+- [ ] Page load times acceptable
+- [ ] Real-time updates working
+- [ ] No console errors
+- [ ] Mobile responsiveness
+
+#### **7. Troubleshooting Common Issues**
+
+**CORS Errors**:
+- Add proxy configuration to `vite.config.ts`
+- Update chain config to use proxy URL
+- Ensure target API supports the required endpoints
+
+**Faucet Not Working**:
+- Check faucet URL in chain configuration
+- Verify faucet service is operational
+- Update faucet component logic if needed
+
+**Chain Not Loading**:
+- Verify JSON syntax in chain configuration
+- Check network type (mainnet vs testnet)
+- Ensure all required fields are present
+
+**Docker Issues**:
+- Clear Docker cache: `./docker.sh clean`
+- Rebuild without cache: `./docker.sh build --no-cache`
+- Check container logs: `./docker.sh logs`
 
 ---
 
