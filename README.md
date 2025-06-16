@@ -319,7 +319,7 @@ The faucet component automatically detects the faucet type:
 - Uses standard ping.pub faucet API format
 
 ### **Current Faucet Status**
-- **Faucet Address**: `aiw316s6un670ll3uuzsxlzr0zkkw7ss3xwhql6rlxa`
+- **Faucet Address**: `aiw31r5v5srda7xfth3hn2s26txvrcrntldjur3whgk`
 - **Balance**: ~50,000 AIW3 tokens
 - **Amount per Request**: 1 AIW3 token
 - **Status**: ✅ Fully Operational

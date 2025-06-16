@@ -70,7 +70,7 @@ function balance() {
     if (typeof chainStore.current?.faucet === 'string') {
         // Try to get faucet info - for AIW3 we'll set some default values
         // since the faucet endpoint doesn't provide balance info in the same format
-        faucet.value = 'aiw316s6un670ll3uuzsxlzr0zkkw7ss3xwhql6rlxa'; // Known faucet address for AIW3
+        faucet.value = 'aiw31r5v5srda7xfth3hn2s26txvrcrntldjur3whgk'; // Known faucet address for AIW3
         balances.value = [{ denom: 'uaiw3', amount: '50000000000' }]; // 50k AIW3 as provided by user
         return;
     }

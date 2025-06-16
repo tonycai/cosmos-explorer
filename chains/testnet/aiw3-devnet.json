@@ -1,6 +1,6 @@
 {
     "chain_name": "aiw3-devnet",
-    "api": ["http://localhost:3000/api"],
+    "api": ["https://devnet-api.aiw3.io"],
     "rpc": ["https://devnet-rpc.aiw3.io"],
     "faucet": "https://devnet-faucet.aiw3.io",
     "coingecko": "",
